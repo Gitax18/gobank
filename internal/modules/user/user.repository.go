@@ -1,6 +1,8 @@
 package user
 
 import (
+	"errors"
+
 	"gorm.io/gorm"
 )
 
@@ -23,8 +25,17 @@ func(r* Repository) Update(userId int, updates map[string]any) error{
 }
 
 func(r* Repository) Delete(userId int) error {
-	return r.DB.Delete(&User{}, userId).Error
-}
+res := r.DB.Delete(&User{}, userId)
+
+	if res.Error != nil {
+		return res.Error
+	}
+
+	if res.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+
+	return nil}
 
 func(r* Repository) Read(userId int) (*User, error) {
 	user := &User{}
