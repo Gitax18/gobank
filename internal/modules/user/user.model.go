@@ -1,13 +1,18 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
-	ID            uint    `bson:"primary key;autoIncrement" json:"id"`
-	Name          *string `json:"name"`
-	Number        *int    `json:"number"`
-	AccountNumber *int    `json:"account_number"`
-	Balance       *int  `json:"balance"`
+	CreatedAt	  time.Time		`json:"-"`
+	ID            uint    		`gorm:"primarykey;autoIncrement" json:"id"`
+	Name          *string 		`json:"name"`
+	Number        *int    		`gorm:"unique" json:"number"`
+	AccountNumber *int    		`gorm:"unique" json:"account_number"`
+	Balance       *int  		`json:"balance"`
 }
 
 func MigrateUser(db *gorm.DB) error{
