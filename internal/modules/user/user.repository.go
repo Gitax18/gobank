@@ -47,6 +47,17 @@ func(r* Repository) Read(userId int) (*User, error) {
 	return user, err
 }
 
+func(r* Repository) ReadByMail(email string) (*User, error) {
+	user := &User{}
+	err := r.DB.
+		Where("email = ?", email).
+		First(user).
+		Error
+
+	return user, err
+}
+
+
 func(r *Repository) Debit(userId int, amount int) error {
 	user := &User{}
 
