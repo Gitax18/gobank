@@ -39,11 +39,46 @@ res := r.DB.Delete(&User{}, userId)
 
 func(r* Repository) Read(userId int) (*User, error) {
 	user := &User{}
-
 	err := r.DB.
 		Where("id = ?", userId).
 		First(user).
 		Error
 
 	return user, err
+}
+
+func(r *Repository) Debit(userId int, amount int) error {
+	user := &User{}
+
+
+	err := r.DB.
+		Where("id = ?", userId).
+		First(user).
+		Error; if err != nil {
+			return errors.New("Error founding user account.\n"+err.Error())
+		}
+
+	updated_balance := *user.Balance - amount
+
+	err = r.DB.Model(&User{}).Where("id=?", userId).Update("balance", updated_balance).Error
+
+	return err
+}
+
+func(r *Repository) Credit(userId int, amount int) error {
+	user := &User{}
+
+
+	err := r.DB.
+		Where("id = ?", userId).
+		First(user).
+		Error; if err != nil {
+			return errors.New("Error founding user account.\n"+err.Error())
+		}
+
+	updated_balance := *user.Balance + amount
+
+	err = r.DB.Model(&User{}).Where("id=?", userId).Update("balance", updated_balance).Error
+
+	return err
 }
