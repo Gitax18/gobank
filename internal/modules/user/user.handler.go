@@ -2,13 +2,74 @@ package user
 
 import (
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Handler struct {
 	s *Service
+}
+
+func(h *Handler) POSTLogoutUser(context fiber.Ctx) error {
+		// send the cookie with jwt payload
+	cookie := new(fiber.Cookie)
+	cookie.Name = "Authorization"
+	cookie.Value = ""
+	cookie.Expires = time.Now()
+	cookie.Secure = false // because localhost
+
+	context.Cookie(cookie)
+
+	return context.Status(http.StatusOK).JSON(fiber.Map{"message": "user logout successfully"})
+}
+
+func(h *Handler) POSTLoginUser(context fiber.Ctx) error {
+
+	type UserCreds struct {
+		Email 	  string  	`json:"email"`
+		Password  string	`json:"password"`
+	}
+	var uc UserCreds
+
+	err := context.Bind().JSON(&uc); if err != nil {
+		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "bad request"})
+	}
+	
+	user, err := h.s.ReadUserByMail(uc.Email); if err != nil {
+		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "mail not found", "err": err})
+	}
+	
+	err = bcrypt.CompareHashAndPassword([]byte(*user.HashedPassword), []byte(uc.Password)); if err != nil {
+		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "password not found", "err": err})
+	}
+		
+	// sign the JWT with user data
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sig": user,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET"))); if err != nil {
+		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "fail to generate token", "err": err})
+	}
+
+	// send the cookie with jwt payload
+	cookie := new(fiber.Cookie)
+	cookie.Name = "Authorization"
+	cookie.Value = tokenString
+	cookie.Expires = time.Now().Add(24 * time.Hour)
+	cookie.Secure = false // because localhost
+
+	context.Cookie(cookie)
+
+	return context.Status(http.StatusOK).JSON(fiber.Map{"message": "user logined successfully"})
+	
 }
 
 func(h *Handler) POSTCreateUser(context fiber.Ctx) error {
@@ -18,11 +79,11 @@ func(h *Handler) POSTCreateUser(context fiber.Ctx) error {
 		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "bad request"})
 	}
 
-	err = h.s.CreateUser(*user.Name, *user.Number, *user.AccountNumber, *user.Balance); if err != nil {
+	err = h.s.CreateUser(*user.Email, *user.HashedPassword, *user.Name, *user.Number, *user.AccountNumber, *user.Balance); if err != nil {
 		return context.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "error creating user", "err": err.Error()})
 	}
-
-	return nil
+	
+	return context.Status(http.StatusOK).JSON(fiber.Map{"message": "user created successfully"})
 }
 
 func(h *Handler) PUTUpdateUser(context fiber.Ctx) error {
