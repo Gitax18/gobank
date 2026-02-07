@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Gitax18/gobank/internal/database"
+	"github.com/Gitax18/gobank/internal/modules/transaction"
 	"github.com/Gitax18/gobank/internal/modules/user"
 	"github.com/Gitax18/gobank/internal/router"
 	"github.com/gofiber/fiber/v3"
@@ -33,13 +34,16 @@ func main() {
 
 	// migrating models to database 
 	err = user.MigrateUser(db)
+	err = transaction.MigrateTransaction(db)
 
 	// initiang fiber server
 	app := fiber.New()
 
 	router.Setup(app, db)
 
-	err = app.Listen(":8080"); if err != nil {
+	err = app.Listen(":8080");
+	
+	if err != nil {
 		log.Fatal(err)
 	}
 }
