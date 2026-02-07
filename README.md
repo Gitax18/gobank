@@ -2,6 +2,23 @@
 
 A RESTful banking API built with Go. GoBank provides essential banking operations including user authentication, account management, and transaction handling. Built using Go Fiber v3 framework with PostgreSQL database and follows clean architecture principles.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+  - [Prerequisites](#prerequisites)
+  - [Steps](#steps)
+- [Usage](#usage)
+  - [Installing Dependencies](#installing-dependencies)
+  - [Setting Up Environment](#setting-up-environment)
+  - [Creating Database](#creating-database)
+  - [Starting the Application](#starting-the-application)
+- [API Endpoints](#api-endpoints)
+  - [Authentication](#authentication)
+  - [User Management](#user-management)
+  - [Transactions](#transactions)
+- [Project Structure](#project-structure)
+
 ## Features
 
 **Authentication**
