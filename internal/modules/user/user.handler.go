@@ -130,14 +130,14 @@ func(h *Handler) DELETEUser(context fiber.Ctx) error {
 }
 
 func(h *Handler) GETUser(context fiber.Ctx) error {
-	id, err := strconv.Atoi(context.Params("id")); if err != nil {
-		context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Improper ID"})
-		return nil
-	}
-
+	// getting id from request local storage (user data was injected through auth middleware)
+	t := context.Locals("user").(map[string]any)
+	
+	id:= int(t["id"].(float64))
+	
 	var user *User
 
-	user, err = h.s.ReadUser(id); if err != nil {
+	user, err := h.s.ReadUser(id); if err != nil {
 		return context.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"message": "error getting user",
 			"err": err.Error(),

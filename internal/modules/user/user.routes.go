@@ -19,7 +19,7 @@ func UserRoutes(app *fiber.App, db *gorm.DB){
 	router.Post("/register", handler.POSTCreateUser)
 	router.Post("/logout", middleware.CheckAuth, handler.POSTLogoutUser)
 
-	router.Get("/:id", middleware.CheckAuth, handler.GETUser)
+	router.Get("", middleware.CheckAuth, handler.GETUser)
 	router.Put("/:id", middleware.CheckAuth, handler.PUTUpdateUser)
 	router.Delete("/:id", middleware.CheckAuth, handler.DELETEUser)
 }
