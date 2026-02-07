@@ -38,5 +38,7 @@ func CheckAuth(context fiber.Ctx) error {
 		return context.Status(http.StatusForbidden).JSON(fiber.Map{"message": "token expired, please login"})
 	}
 
+	context.Locals("user", claims["sig"])
+
 	return context.Next()
 }
