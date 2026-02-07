@@ -1,17 +1,15 @@
 package transaction
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
 type Transaction struct {
-	CreatedAt					time.Time		
-	ID           				uint   			`gorm:"primarykey;autoIncrement" json:"id"`
-	SenderAccountNumber     	*int 			`json:"sender_account_number"`
-	ReceiverAccountNumber   	*int    		`json:"receiver_account_number"`
-	Amount       				*int 			`json:"amount"`
+	gorm.Model
+	ID           	uint   		`gorm:"primarykey;autoIncrement" json:"id"`
+	SenderId     	int 		`json:"sender_id"`
+	ReceiverId   	int    		`json:"receiver_id"`
+	Amount       	int 		`json:"amount"`
 }
 
 func MigrateTransaction(db *gorm.DB) error{

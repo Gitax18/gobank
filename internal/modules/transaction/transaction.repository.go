@@ -1,6 +1,9 @@
 package transaction
 
 import (
+	"errors"
+
+	"github.com/Gitax18/gobank/internal/modules/user"
 	"gorm.io/gorm"
 )
 
@@ -8,6 +11,48 @@ type Repository struct {
 	DB *gorm.DB
 }
 
-func (r *Repository) Create(senderId int, receiverId int, amount int){
+func (r *Repository) Create(transaction *Transaction) error {
+	// initiate the tsx
+	err := r.DB.Transaction(func(tx *gorm.DB)error {
+		// retrivie sender
+		var senderUser user.User
+		err := tx.First(&senderUser, transaction.SenderId).Error; if err != nil {
+			return err
+		}
+		// validat sender balance for amount deduction
+		if *senderUser.Balance <= transaction.Amount {
+			return errors.New("Insufficient balance")
+		}
+		// decrease the balance from amount
+		updatedBalance := *senderUser.Balance - transaction.Amount;
+
+		// update the sender details
+		err = tx.Model(senderUser).Update("balance", updatedBalance).Error; if err != nil {
+			return err
+		}
+		// retrieve receiver
+		var receiverUser user.User
+		err = tx.First(&receiverUser, transaction.ReceiverId).Error; if err != nil {
+			return err
+		}
+		// increment the amount
+		updatedBalance = *receiverUser.Balance + transaction.Amount;
+
+		// update the receiver details
+		err = tx.Model(receiverUser).Update("balance", updatedBalance).Error; if err != nil {
+			return err
+		}
+
+		err = r.DB.Create(transaction).Error
+
+		// commit the transaction
+		return nil
+
+	})
 	
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
