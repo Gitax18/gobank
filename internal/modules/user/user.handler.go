@@ -3,7 +3,6 @@ package user
 import (
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -87,9 +86,10 @@ func(h *Handler) POSTCreateUser(context fiber.Ctx) error {
 }
 
 func(h *Handler) PUTUpdateUser(context fiber.Ctx) error {
-	id, err := strconv.Atoi(context.Params("id")); if err != nil {
-		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Id should not be empty"})
-	}
+	// getting id from request local storage (user data was injected through auth middleware)
+	t := context.Locals("user").(map[string]any)
+	
+	id:= int(t["id"].(float64))
 
 	type updates struct {
 		Name *string `json:"name"`
@@ -98,7 +98,7 @@ func(h *Handler) PUTUpdateUser(context fiber.Ctx) error {
 
 	var u updates
 
-	err = context.Bind().JSON(&u); if err != nil {
+	err := context.Bind().JSON(&u); if err != nil {
 		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "improper data", "data": u})
 	}
 	
@@ -114,11 +114,12 @@ func(h *Handler) PUTUpdateUser(context fiber.Ctx) error {
 }
 
 func(h *Handler) DELETEUser(context fiber.Ctx) error {
-	id, err := strconv.Atoi(context.Params("id")); if err != nil {
-		return context.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "Id should not be empty"})
-	}
+	// getting id from request local storage (user data was injected through auth middleware)
+	t := context.Locals("user").(map[string]any)
 	
-	err = h.s.DeleteUser(id); if err != nil {
+	id:= int(t["id"].(float64))
+	
+	err := h.s.DeleteUser(id); if err != nil {
 		return context.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "Error deleting user", "err": err.Error()})
 	}
 
