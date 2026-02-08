@@ -5,6 +5,7 @@ import (
 
 	"github.com/Gitax18/gobank/internal/modules/user"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository struct {
@@ -13,10 +14,10 @@ type Repository struct {
 
 func (r *Repository) Create(transaction *Transaction) error {
 	// initiate the tsx
-	err := r.DB.Transaction(func(tx *gorm.DB)error {
+	return r.DB.Transaction(func(tx *gorm.DB)error {
 		// retrivie sender
 		var senderUser user.User
-		err := tx.First(&senderUser, transaction.SenderId).Error; if err != nil {
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&senderUser, transaction.SenderId).Error; if err != nil {
 			return err
 		}
 		// validat sender balance for amount deduction
@@ -27,32 +28,28 @@ func (r *Repository) Create(transaction *Transaction) error {
 		updatedBalance := *senderUser.Balance - transaction.Amount;
 
 		// update the sender details
-		err = tx.Model(senderUser).Update("balance", updatedBalance).Error; if err != nil {
+		err = tx.Model(&senderUser).Update("balance", updatedBalance).Error; if err != nil {
 			return err
 		}
 		// retrieve receiver
 		var receiverUser user.User
-		err = tx.First(&receiverUser, transaction.ReceiverId).Error; if err != nil {
+		err = tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&receiverUser, transaction.ReceiverId).Error; if err != nil {
 			return err
 		}
 		// increment the amount
 		updatedBalance = *receiverUser.Balance + transaction.Amount;
 
 		// update the receiver details
-		err = tx.Model(receiverUser).Update("balance", updatedBalance).Error; if err != nil {
+		err = tx.Model(&receiverUser).Update("balance", updatedBalance).Error; if err != nil {
 			return err
 		}
 
-		err = r.DB.Create(transaction).Error
+		err = tx.Create(transaction).Error; if (err != nil ){
+			return err
+		}
 
 		// commit the transaction
 		return nil
 
 	})
-	
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
